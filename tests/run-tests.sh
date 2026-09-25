@@ -8,7 +8,7 @@ echo "       LEGACY-BANK TESTS"
 echo "================================="
 echo
 
-echo "[1/3] Compilando TEST_DEPOSIT..."
+echo "[1/4] Compilando TEST_DEPOSIT..."
 
 rm -f "$SCRIPT_DIR/test_deposit.exe"
 
@@ -20,7 +20,7 @@ fi
 echo "OK"
 echo
 
-echo "[2/3] Compilando TEST_WITHDRAW..."
+echo "[2/4] Compilando TEST_WITHDRAW..."
 
 rm -f "$SCRIPT_DIR/test_withdraw.exe"
 
@@ -32,13 +32,25 @@ fi
 echo "OK"
 echo
 
-echo "[3/3] Compilando TEST_INQUIRY..."
+echo "[3/4] Compilando TEST_INQUIRY..."
 
 rm -f "$SCRIPT_DIR/test_inquiry.exe"
 
 if ! cobc -x -free -o "$SCRIPT_DIR/test_inquiry.exe" "$SCRIPT_DIR/TEST_INQUIRY.CBL" "$COBOL_DIR/INQUIRY.CBL"; then
 echo "ERRO: Falha ao compilar TEST_INQUIRY."
 exit 1
+fi
+
+echo "OK"
+echo
+
+echo "[4/4] Compilando TEST_VALIDATE_ACCOUNT..."
+
+rm -f "$SCRIPT_DIR/test_validate_account.exe"
+
+if ! cobc -x -free -o "$SCRIPT_DIR/test_validate_account.exe" "$SCRIPT_DIR/TEST_VALIDATE_ACCOUNT.CBL" "$COBOL_DIR/VALIDATE_ACCOUNT.CBL"; then
+    echo "ERRO: Falha ao compilar TEST_VALIDATE_ACCOUNT."
+    exit 1
 fi
 
 echo "OK"
@@ -79,9 +91,19 @@ exit 1
 fi
 
 echo
+echo "[TEST] VALIDATE_ACCOUNT"
+"$SCRIPT_DIR/test_validate_account.exe"
+
+if [ $? -ne 0 ]; then
+    echo
+    echo "ERRO: TEST_VALIDATE_ACCOUNT falhou."
+    exit 1
+fi
+
+echo
 echo "================================="
 echo "       ALL TESTS PASSED"
-echo "       12/12 TESTS PASSED"
+echo "       15/15 TESTS PASSED"
 echo "================================="
 
 exit 0
