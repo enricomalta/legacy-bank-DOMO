@@ -1,41 +1,165 @@
-       IDENTIFICATION DIVISION.
-       PROGRAM-ID. ACCOUNT.
+IDENTIFICATION DIVISION.
+PROGRAM-ID. ACCOUNT.
 
-       DATA DIVISION.
-       WORKING-STORAGE SECTION.
-       01  WS-ACCOUNT-ID PIC 9(10) VALUE 1000000001.
-       01  WS-BALANCE    PIC 9(9)V99 VALUE 1500.00.
-       01  WS-AMOUNT     PIC 9(9)V99 VALUE 0.
-       01  WS-OPTION     PIC 9 VALUE 0.
+DATA DIVISION.
+WORKING-STORAGE SECTION.
 
-       PROCEDURE DIVISION.
-           DISPLAY "LEGACY-BANK".
-           DISPLAY "Conta: " WS-ACCOUNT-ID.
-           DISPLAY "Saldo: R$ " WS-BALANCE.
-           DISPLAY "1 - Deposito".
-           DISPLAY "2 - Saque".
-           DISPLAY "3 - Consultar".
-           ACCEPT WS-OPTION.
+01 WS-ACCOUNT-ID       PIC 9(10) VALUE 1000000001.
+01 WS-BALANCE          PIC S9(9)V99 VALUE 1500.00.
+01 WS-AMOUNT           PIC S9(9)V99 VALUE 0.
+01 WS-OPTION           PIC 9 VALUE 0.
 
-           EVALUATE WS-OPTION
-               WHEN 1
-                   DISPLAY "Valor do deposito:"
-                   ACCEPT WS-AMOUNT
-                   ADD WS-AMOUNT TO WS-BALANCE
-                   DISPLAY "Novo saldo: R$ " WS-BALANCE
-               WHEN 2
-                   DISPLAY "Valor do saque:"
-                   ACCEPT WS-AMOUNT
-                   IF WS-AMOUNT <= WS-BALANCE
-                       SUBTRACT WS-AMOUNT FROM WS-BALANCE
-                       DISPLAY "Novo saldo: R$ " WS-BALANCE
-                   ELSE
-                       DISPLAY "SALDO INSUFICIENTE"
-                   END-IF
-               WHEN 3
-                   DISPLAY "Saldo: R$ " WS-BALANCE
-               WHEN OTHER
-                   DISPLAY "Opcao invalida"
-           END-EVALUATE.
+88 OPTION-DEPOSIT      VALUE 1.
+88 OPTION-WITHDRAW     VALUE 2.
+88 OPTION-INQUIRY      VALUE 3.
 
-           GOBACK.
+01 WS-RETURN-CODE      PIC 9 VALUE 0.
+01 WS-PROGRAM-STATUS   PIC 9 VALUE 0.
+01 WS-CONTINUE         PIC X VALUE 'S'.
+
+88 CONTINUE-YES        VALUE 'S' 's'.
+88 CONTINUE-NO         VALUE 'N' 'n'.
+
+PROCEDURE DIVISION.
+
+MAIN-PROCESS.
+PERFORM DISPLAY-HEADER
+PERFORM PROCESS-MENU
+PERFORM END-PROGRAM
+GOBACK.
+
+DISPLAY-HEADER.
+DISPLAY "================================="
+DISPLAY "           LEGACY-BANK"
+DISPLAY "================================="
+DISPLAY "Conta: " WS-ACCOUNT-ID
+DISPLAY "Saldo: R$ " WS-BALANCE
+DISPLAY " ".
+
+PROCESS-MENU.
+PERFORM UNTIL CONTINUE-NO
+PERFORM DISPLAY-MENU
+PERFORM READ-OPTION
+PERFORM PROCESS-OPTION
+PERFORM ASK-CONTINUE
+END-PERFORM.
+
+DISPLAY-MENU.
+DISPLAY "---------------------------------"
+DISPLAY "1 - Deposito"
+DISPLAY "2 - Saque"
+DISPLAY "3 - Consultar saldo"
+DISPLAY "---------------------------------".
+
+READ-OPTION.
+DISPLAY "Digite uma opcao:"
+ACCEPT WS-OPTION.
+
+PROCESS-OPTION.
+MOVE 0 TO WS-RETURN-CODE
+
+
+EVALUATE TRUE
+    WHEN OPTION-DEPOSIT
+        PERFORM DEPOSIT
+
+    WHEN OPTION-WITHDRAW
+        PERFORM WITHDRAW
+
+    WHEN OPTION-INQUIRY
+        PERFORM INQUIRY
+
+    WHEN OTHER
+        DISPLAY "ERRO: Opcao invalida."
+        MOVE 1 TO WS-RETURN-CODE
+END-EVALUATE.
+
+
+DEPOSIT.
+DISPLAY "Valor do deposito:"
+ACCEPT WS-AMOUNT
+
+
+CALL "DEPOSIT"
+    USING WS-BALANCE
+          WS-AMOUNT
+          WS-RETURN-CODE
+
+EVALUATE WS-RETURN-CODE
+    WHEN 0
+        DISPLAY "Deposito realizado com sucesso."
+        DISPLAY "Novo saldo: R$ " WS-BALANCE
+
+    WHEN 1
+        DISPLAY "ERRO: O valor do deposito deve ser maior que zero."
+
+    WHEN OTHER
+        DISPLAY "ERRO: Falha interna ao realizar deposito."
+        MOVE 9 TO WS-PROGRAM-STATUS
+END-EVALUATE.
+
+
+WITHDRAW.
+DISPLAY "Valor do saque:"
+ACCEPT WS-AMOUNT
+
+
+CALL "WITHDRAW"
+    USING WS-BALANCE
+          WS-AMOUNT
+          WS-RETURN-CODE
+
+EVALUATE WS-RETURN-CODE
+    WHEN 0
+        DISPLAY "Saque realizado com sucesso."
+        DISPLAY "Novo saldo: R$ " WS-BALANCE
+
+    WHEN 1
+        DISPLAY "ERRO: O valor do saque deve ser maior que zero."
+
+    WHEN 2
+        DISPLAY "ERRO: Saldo insuficiente."
+
+    WHEN OTHER
+        DISPLAY "ERRO: Falha interna ao realizar saque."
+        MOVE 9 TO WS-PROGRAM-STATUS
+END-EVALUATE.
+
+
+INQUIRY.
+CALL "INQUIRY"
+USING WS-ACCOUNT-ID
+WS-BALANCE
+WS-RETURN-CODE
+
+
+EVALUATE WS-RETURN-CODE
+    WHEN 0
+        DISPLAY "---------------------------------"
+        DISPLAY "Conta: " WS-ACCOUNT-ID
+        DISPLAY "Saldo: R$ " WS-BALANCE
+        DISPLAY "---------------------------------"
+
+    WHEN 3
+        DISPLAY "ERRO: Conta invalida ou inexistente."
+
+    WHEN OTHER
+        DISPLAY "ERRO: Falha interna ao consultar conta."
+        MOVE 9 TO WS-PROGRAM-STATUS
+END-EVALUATE.
+
+
+ASK-CONTINUE.
+DISPLAY " "
+DISPLAY "Deseja realizar outra operacao? (S/N)"
+ACCEPT WS-CONTINUE.
+
+END-PROGRAM.
+MOVE 0 TO WS-PROGRAM-STATUS
+
+
+DISPLAY " "
+DISPLAY "Encerrando LEGACY-BANK..."
+DISPLAY "Codigo da ultima operacao: " WS-RETURN-CODE
+DISPLAY "Codigo do programa: " WS-PROGRAM-STATUS.
+
